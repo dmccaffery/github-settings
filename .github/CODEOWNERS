@@ -1,0 +1,6 @@
+# Code owners for bitwise-media-group/github-settings.
+#
+# The `public-pull-request-required` org ruleset sets require_code_owner_review,
+# so every PR to a protected branch (main, releases/*) needs an approving review
+# from a code owner below.
+* @bitwise-media-group/workflow-maintainers

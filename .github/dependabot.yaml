@@ -1,0 +1,23 @@
+version: 2
+
+# The org enables Dependabot alerts and security updates for new repos; this
+# config adds version updates. Dependabot opens `dependabot/**` branches, the
+# prefix `public-fork-only` allows to be created directly, and its commits are
+# signed by GitHub so they satisfy `required_signatures`.
+updates:
+  # Keep the actions pinned in .github/workflows current. CodeQL analyzes these
+  # same workflows, so staying patched also keeps the code-scanning check clean.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: deps
+      prefix-development: deps
+      include: scope
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns:
+          - "*"
