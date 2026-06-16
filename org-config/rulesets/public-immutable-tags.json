@@ -1,0 +1,40 @@
+{
+  "name": "public-immutable-tags",
+  "target": "tag",
+  "enforcement": "active",
+  "bypass_actors": [],
+  "conditions": {
+    "repository_property": {
+      "exclude": [],
+      "include": [
+        {
+          "name": "visibility",
+          "source": "system",
+          "property_values": [
+            "public"
+          ]
+        }
+      ]
+    },
+    "ref_name": {
+      "exclude": [],
+      "include": [
+        "refs/tags/v[0-9]*.[0-9]*.[0-9]*"
+      ]
+    }
+  },
+  "rules": [
+    {
+      "type": "deletion"
+    },
+    {
+      "type": "required_linear_history"
+    },
+    {
+      "type": "update"
+    },
+    {
+      "type": "non_fast_forward"
+    }
+  ]
+}

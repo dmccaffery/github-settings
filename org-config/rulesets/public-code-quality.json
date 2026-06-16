@@ -1,0 +1,44 @@
+{
+  "name": "public-code-quality",
+  "target": "branch",
+  "enforcement": "active",
+  "bypass_actors": [
+    {
+      "actor_id": 4048320,
+      "actor_type": "Integration",
+      "bypass_mode": "always"
+    }
+  ],
+  "conditions": {
+    "ref_name": {
+      "exclude": [],
+      "include": []
+    },
+    "repository_property": {
+      "exclude": [],
+      "include": [
+        {
+          "name": "visibility",
+          "source": "system",
+          "property_values": [
+            "public"
+          ]
+        }
+      ]
+    }
+  },
+  "rules": [
+    {
+      "type": "code_scanning",
+      "parameters": {
+        "code_scanning_tools": [
+          {
+            "tool": "CodeQL",
+            "security_alerts_threshold": "high_or_higher",
+            "alerts_threshold": "errors"
+          }
+        ]
+      }
+    }
+  ]
+}
