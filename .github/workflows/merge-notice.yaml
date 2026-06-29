@@ -8,7 +8,7 @@
 # and never checks out or runs PR code, so the elevated context is safe. No
 # secret needed.
 
-name: Fast-forward merge notice
+name: Merge Notice
 
 on:
   pull_request_target:
@@ -20,6 +20,6 @@ permissions:
 
 jobs:
   notice:
-    uses: bitwise-media-group/github-workflows/.github/workflows/merge-notice.yaml@077a003a620f49bd0062c73fc761dbea05d7fb70 # v1.1.0
+    uses: bitwise-media-group/github-workflows/.github/workflows/merge-notice.yaml@5a07255dbaf1c4fb63c95cb93f7db6555bccc711 # v3.2.1
     with:
       pr-number: ${{ github.event.pull_request.number }}

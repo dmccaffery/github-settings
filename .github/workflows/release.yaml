@@ -1,0 +1,36 @@
+# Caller for the org's reusable release workflow. This repo has no .goreleaser.yaml
+# and ships no build artifacts, so a release here is just the release-please cut
+# (the workflow's goreleaser/publish and vanity-tags jobs skip). It drives releases
+# within the org rulesets for public repos:
+#   - opens a `release-please--*` release PR branch, the prefix that
+#     `public-fork-only` allows to be created directly in the repo;
+#   - tags releases as vX.Y.Z, the only tags `public-version-tags-only` permits,
+#     which `public-immutable-tags` then freezes;
+#   - release-please commits with the GITHUB_TOKEN, which GitHub signs as verified,
+#     so the release commit satisfies `required_signatures` on protected branches.
+#
+# Manifest mode: configuration lives in release-please-config.json and the current
+# version in .release-please-manifest.json at the repo root. vanity-tags is left at
+# its default (false) — nothing pins this repo as a reusable workflow, so there are
+# no floating major tags to move.
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+# ceiling for the reusable workflow's release-please job. The goreleaser/publish
+# job (which would need id-token/attestations/artifact-metadata) and vanity-tags
+# job never run here, so their scopes are not granted.
+permissions:
+  # create release commits, tags, and GitHub Releases
+  contents: write
+  # release-please creates PR labels via the issues API
+  issues: write
+  # open and update the release PR
+  pull-requests: write
+
+jobs:
+  release:
+    uses: bitwise-media-group/github-workflows/.github/workflows/release.yaml@5a07255dbaf1c4fb63c95cb93f7db6555bccc711 # v3.2.1

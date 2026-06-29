@@ -1,0 +1,25 @@
+# Caller for the org's reusable merge-review-ack workflow — the v3 companion that
+# makes an approval complete an armed auto-merge. An approval on a fork PR carries
+# no secrets, so merge.yaml's review path can't merge it directly; and if every
+# check is already green, the approval is the last event, so nothing else would
+# fire to finish the merge. This workflow completes on an approving review purely
+# so its workflow_run(completed) re-enters merge.yaml in the base-repo context,
+# where the "FF Merge" App token is minted and the fast-forward retried. Harmless
+# for same-repo PRs (those merge via the review path directly).
+#
+# Wire-up: this workflow's name, "Merge Review Ack", is listed in merge.yaml's
+# workflow_run.workflows. It does no privileged work, so it grants nothing and
+# needs no secret — the completed run is the only signal.
+
+name: Merge Review Ack
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+# does no privileged work; grants nothing
+permissions: {}
+
+jobs:
+  ack:
+    uses: bitwise-media-group/github-workflows/.github/workflows/merge-review-ack.yaml@5a07255dbaf1c4fb63c95cb93f7db6555bccc711 # v3.2.1
