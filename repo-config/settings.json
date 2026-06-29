@@ -8,5 +8,6 @@
   "allow_rebase_merge": false,
   "allow_auto_merge": false,
   "allow_update_branch": false,
-  "delete_branch_on_merge": true
+  "delete_branch_on_merge": true,
+  "pull_request_creation_policy": "collaborators_only"
 }

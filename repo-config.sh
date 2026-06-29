@@ -14,10 +14,14 @@ set -eu
 #     bypass_actors). Org-level rulesets that merely apply to this repo are
 #     ignored in both directions — manage those with org-config.sh.
 #   - Labels (name, color, description) as a single labels.json array.
+#   - Pages build source (Settings > Pages > "Build and deployment > Source")
+#     as pages.json: build_type ("workflow" = GitHub Actions, "legacy" = deploy
+#     from a branch) plus the source branch/path when building from a branch.
 #   - General settings, grouped as:
 #       features       has_issues, has_projects, has_wiki, has_discussions
 #       pull-requests  allow_squash_merge, allow_merge_commit, allow_rebase_merge,
-#                      allow_auto_merge, allow_update_branch, delete_branch_on_merge
+#                      allow_auto_merge, allow_update_branch, delete_branch_on_merge,
+#                      pull_request_creation_policy (all | collaborators_only)
 #       commits        squash/merge commit title+message templates,
 #                      web_commit_signoff_required
 #
@@ -32,6 +36,10 @@ set -eu
 #   - labels.json mirrors the same way by entry: update/create the labels listed,
 #     delete any repo label absent from it. A missing labels.json is left
 #     untouched; an empty array ([]) means "remove them all".
+#   - pages.json is applied, not mirrored: import enables/updates Pages to match
+#     it (create when off, update when on) but never disables Pages, and export
+#     only overwrites it while Pages is on — a missing pages.json, or a repo with
+#     Pages off, is left untouched so a hand-authored template isn't clobbered.
 #
 # Env:
 #   STRIP_BYPASS=1   drop ruleset bypass_actors on export — use when the bypass
@@ -45,6 +53,7 @@ SETTINGS_FILTER='{
   has_issues, has_projects, has_wiki, has_discussions,
   allow_squash_merge, allow_merge_commit, allow_rebase_merge,
   allow_auto_merge, allow_update_branch, delete_branch_on_merge,
+  pull_request_creation_policy,
   squash_merge_commit_title, squash_merge_commit_message,
   merge_commit_title, merge_commit_message,
 }'
@@ -70,6 +79,21 @@ export_config() {
   # General settings (features / pull-requests / commits).
   gh api "repos/$repo" | jq "$SETTINGS_FILTER" >"$dir/settings.json"
   echo "exported settings  -> $dir/settings.json"
+
+  # Pages build source. Reduce to the create/update payload: build_type, plus
+  # source branch/path only for branch ("legacy") deploys. When Pages is off
+  # (404) leave any existing pages.json alone rather than deleting a template.
+  if pages=$(gh api "repos/$repo/pages" 2>/dev/null); then
+    printf '%s' "$pages" |
+      jq '{build_type}
+            + (if .build_type == "legacy"
+               then {source: {branch: .source.branch, path: .source.path}}
+               else {} end)' \
+        >"$dir/pages.json"
+    echo "exported pages     -> $dir/pages.json"
+  else
+    echo "pages off on $repo; leaving $dir/pages.json untouched" >&2
+  fi
 
   # Mirror reality: drop previously-exported rulesets so any removed upstream
   # don't linger here as stale files.
@@ -106,6 +130,22 @@ import_config() {
     echo "applied settings   <- $dir/settings.json"
   else
     echo "no $dir/settings.json; skipping settings" >&2
+  fi
+
+  # Pages: apply pages.json onto the repo. PUT updates an existing site, POST
+  # creates one when Pages is off; a missing file leaves Pages alone. We never
+  # disable Pages here (no DELETE) — that stays a deliberate manual action.
+  if [ -f "$dir/pages.json" ]; then
+    if gh api "repos/$repo/pages" >/dev/null 2>&1; then
+      verb=PUT
+    else
+      verb=POST
+    fi
+    if gh api -X "$verb" "repos/$repo/pages" --input "$dir/pages.json" >/dev/null; then
+      echo "applied pages      <- $dir/pages.json"
+    else
+      echo "FAILED pages       <- $dir/pages.json (see error above)" >&2
+    fi
   fi
 
   # Rulesets: mirror the files onto the repo. A missing rulesets dir is left
