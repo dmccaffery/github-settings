@@ -9,11 +9,6 @@
       "bypass_mode": "always"
     },
     {
-      "actor_id": 5,
-      "actor_type": "RepositoryRole",
-      "bypass_mode": "always"
-    },
-    {
       "actor_id": 4048320,
       "actor_type": "Integration",
       "bypass_mode": "always"
@@ -21,7 +16,15 @@
   ],
   "conditions": {
     "repository_property": {
-      "exclude": [],
+      "exclude": [
+        {
+          "name": "bypass-policies",
+          "source": "custom",
+          "property_values": [
+            "true"
+          ]
+        }
+      ],
       "include": [
         {
           "name": "visibility",

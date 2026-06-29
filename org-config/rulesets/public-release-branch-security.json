@@ -12,7 +12,15 @@
       ]
     },
     "repository_property": {
-      "exclude": [],
+      "exclude": [
+        {
+          "name": "bypass-policies",
+          "source": "custom",
+          "property_values": [
+            "true"
+          ]
+        }
+      ],
       "include": [
         {
           "name": "visibility",
