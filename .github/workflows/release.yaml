@@ -47,3 +47,10 @@ permissions:
 jobs:
   release:
     uses: bitwise-media-group/github-workflows/.github/workflows/release.yaml@4a154ffd7efbb6aff856386ec1def4b6dc364672 # v4.0.0
+    with:
+      # author the release PR as the FF Merge App so it can auto-merge (a
+      # GITHUB_TOKEN-authored push fires no workflow_run to trigger the merge)
+      app-client-id: ${{ vars.FF_MERGE_CLIENT_ID }}
+    secrets:
+      # private key for the App that authors the release PR (same App as /merge)
+      app-private-key: ${{ secrets.FF_MERGE_PRIVATE_KEY }}
