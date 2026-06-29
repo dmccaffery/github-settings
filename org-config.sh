@@ -9,12 +9,15 @@ set -eu
 #   ./org-config.sh import <org> [dir]        # apply config <- dir
 #   ./org-config.sh labels-sync [--public|--private] <org> [dir]
 #   ./org-config.sh sync        [--public|--private] <org> [dir]
+#   ./org-config.sh teams-sync  [--public|--private] <org>
 #
-# org defaults to bitwise-media-group. The two *-sync commands fan config out
-# across the org's repos (default dir: ./repo-config) and take --public /
-# --private to limit which repos by visibility:
+# org defaults to bitwise-media-group. The *-sync commands fan config out across
+# the org's repos and take --public / --private to limit which repos by
+# visibility. labels-sync and sync read a snapshot dir (default: ./repo-config):
 #   labels-sync  applies only <dir>/labels.json to each repo.
 #   sync         runs the full repo-config.sh import (settings, rulesets, labels).
+#   teams-sync   grants a team (default: bitwise-maintainers) a permission
+#                (default: maintain) on every repo; takes no dir.
 #
 # What's covered:
 #   - Organisation-level rulesets only (full definitions: conditions, rules,
@@ -48,11 +51,21 @@ set -eu
 # deleted from each repo, which removes it from that repo's issues/PRs. Set
 # KEEP_EXTRA=1 to only add/update and never delete.
 #
+# Teams: teams-sync grants one org team a single permission on EVERY non-archived
+# repo in the org, so a standing maintainer team gets access to repos created
+# after it was set up. Defaults to the bitwise-maintainers team at maintain (the
+# "as maintainers" access level); override with TEAM / TEAM_PERMISSION. Purely
+# additive and idempotent: GitHub's team-repo PUT upserts the grant, and the
+# command never removes a team from a repo (no mirror/delete pass).
+#
 # Env:
 #   STRIP_BYPASS=1   drop ruleset bypass_actors on export — use when the bypass
 #                    actors (teams, apps, custom roles) won't exist in the target.
 #   KEEP_EXTRA=1     labels-sync only: add/update labels but never delete ones a
 #                    repo has that aren't in labels.json (additive, not mirror).
+#   TEAM=<slug>      teams-sync only: org team to grant (default bitwise-maintainers).
+#   TEAM_PERMISSION  teams-sync only: pull|triage|push|maintain|admin or a custom
+#                    role name (default maintain).
 #
 # Requires: gh (authenticated, org owner), jq.
 # Note: reading/writing org settings and rulesets requires organisation owner;
@@ -81,12 +94,17 @@ usage() {
   echo "       $0 import <org> [dir]" >&2
   echo "       $0 labels-sync [--public|--private] <org> [dir]   (dir default: repo-config)" >&2
   echo "       $0 sync        [--public|--private] <org> [dir]   (dir default: repo-config)" >&2
+  echo "       $0 teams-sync  [--public|--private] <org>         (team default: bitwise-maintainers)" >&2
   echo "       (org defaults to bitwise-media-group)" >&2
   exit 2
 }
 
 gh=/opt/homebrew/bin/gh
 here=$(dirname "$0")
+
+# teams-sync target: which org team gets which permission on every repo.
+team=${TEAM:-bitwise-maintainers}
+team_permission=${TEAM_PERMISSION:-maintain}
 
 cmd="${1:-}"
 [ -n "$cmd" ] || usage
@@ -288,6 +306,24 @@ repo_sync() {
   done
 }
 
+# Grant $team the $team_permission level on every non-archived repo in the org,
+# optionally filtered by visibility. GitHub's team-repo PUT is an upsert, so this
+# is idempotent and re-asserts access on repos that already have it; it never
+# removes the team (additive, no mirror/delete pass). Archived repos are
+# read-only and skipped. Per-repo failures are reported but don't abort the run.
+teams_sync() {
+  ${gh} api --paginate "orgs/$org/repos?type=$visibility" \
+    --jq '.[] | select(.archived | not) | .name' | while read -r name; do
+    [ -n "$name" ] || continue
+    if ${gh} api -X PUT "orgs/$org/teams/$team/repos/$org/$name" \
+      -f permission="$team_permission" >/dev/null; then
+      echo "granted $team ($team_permission) -> $name"
+    else
+      echo "FAILED team        -> $name (see error above)" >&2
+    fi
+  done
+}
+
 case "$cmd" in
 export)
   dir="${dir:-org-config}"
@@ -304,6 +340,9 @@ labels-sync)
 sync)
   dir="${dir:-repo-config}"
   repo_sync
+  ;;
+teams-sync)
+  teams_sync
   ;;
 *) usage ;;
 esac
