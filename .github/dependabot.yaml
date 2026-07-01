@@ -17,6 +17,8 @@ updates:
       include: scope
     cooldown:
       default-days: 7
+      exclude:
+        - bitwise-media-group/*
     groups:
       github-actions:
         patterns:
