@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/bitwise-media-group/github-settings/compare/v1.1.0...v1.2.0) (2026-07-01)
+
+
+### Features
+
+* **org-config:** wire add-to-project into org-sync ([7ffd544](https://github.com/bitwise-media-group/github-settings/commit/7ffd544e9ccc613830252942e56ef658a4376680)), closes [#6](https://github.com/bitwise-media-group/github-settings/issues/6)
+
+
+### Bug Fixes
+
+* **add-to-project:** also add opened pull requests to the Roadmap project ([3893b92](https://github.com/bitwise-media-group/github-settings/commit/3893b923889ac31ea63818d156fae3f2192aa1b9))
+
 ## [1.1.0](https://github.com/bitwise-media-group/github-settings/compare/v1.0.0...v1.1.0) (2026-06-29)
 
 
