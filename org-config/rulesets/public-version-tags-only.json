@@ -18,7 +18,8 @@
     },
     "ref_name": {
       "exclude": [
-        "refs/tags/v*"
+        "refs/tags/v*",
+        "refs/tags/*--v*"
       ],
       "include": [
         "~ALL"
